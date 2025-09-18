@@ -26,9 +26,10 @@ class Hypothesis:
         coeff = 1.0 / (np.sqrt(2 * np.pi * self.sigma**2))
         L = coeff * np.exp(-0.5 * (diff**2) / (self.sigma**2))
         return L
+    
     #Poisson function for births or clutter given lambda: (lam)mean expected birth/clutter and k: number of events
     def poisson_prob(self, k, lam):
-        return math.exp(-lam) * (lam**k) / math.factorial(k)
+        return -lam + k * math.log(lam) - math.lgamma(k + 1)
     
     def generate_hypotheses(self):
         """
@@ -137,6 +138,8 @@ class Hypothesis:
             self.score_all_hypotheses()
         idx = np.argmax(self.hypothesis_scores)
         return self.hypotheses[idx]
+    
+    #print top k hypotheisand prob
 
 
 ###The above class should cover everything below, The below was to start off and will be deleated after I'm confident in the class
@@ -147,7 +150,8 @@ T = [5, 9]
 Z = [4, 8, 15]
 
 
-
+def poisson_prob(k, lam):
+    return math.exp(-lam) * (lam**k) / math.factorial(k)
 
 def poisson_log_prob(k, lam):
     return -lam + k * math.log(lam) - math.lgamma(k + 1)
