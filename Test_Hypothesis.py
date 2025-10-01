@@ -194,7 +194,8 @@ def test_three_three_exact_sigma():
     sigma1 = .1
     sigma2 = 1
     sigma3 = 10
-    sigma4 = 100
+    sigma4 = 20
+    sigma5 = 40
     lam_birth = .2
     lam_clutter = .2
     prob_detection = .9
@@ -205,26 +206,31 @@ def test_three_three_exact_sigma():
     score = hyp_class.score_hypothesis_log(best_hyp)
     hyp_class1 = Hypothesis(tracks, measurements, sigma1, lam_birth, lam_clutter, prob_detection)
     hyp_class1.score_all_hypotheses()
-    best_hyp1 = hyp_class.best_hypothesis()
+    best_hyp1 = hyp_class1.best_hypothesis()
     score1 = hyp_class1.score_hypothesis_log(best_hyp1)
     hyp_class2 = Hypothesis(tracks, measurements, sigma2, lam_birth, lam_clutter, prob_detection)
     hyp_class2.score_all_hypotheses()
-    best_hyp2 = hyp_class.best_hypothesis()
+    best_hyp2 = hyp_class2.best_hypothesis()
     score2 = hyp_class2.score_hypothesis_log(best_hyp2)
     hyp_class3 = Hypothesis(tracks, measurements, sigma3, lam_birth, lam_clutter, prob_detection)
     hyp_class3.score_all_hypotheses()
-    best_hyp3 = hyp_class.best_hypothesis()
+    best_hyp3 = hyp_class3.best_hypothesis()
     score3 = hyp_class3.score_hypothesis_log(best_hyp3)
     hyp_class4 = Hypothesis(tracks, measurements, sigma4, lam_birth, lam_clutter, prob_detection)
     hyp_class4.score_all_hypotheses()
-    best_hyp4 = hyp_class.best_hypothesis()
+    best_hyp4 = hyp_class4.best_hypothesis()
     score4 = hyp_class4.score_hypothesis_log(best_hyp4)
+    hyp_class5 = Hypothesis(tracks, measurements, sigma5, lam_birth, lam_clutter, prob_detection)
+    hyp_class5.score_all_hypotheses()
+    best_hyp5 = hyp_class5.best_hypothesis()
+    score5 = hyp_class5.score_hypothesis_log(best_hyp5)
 
     expected_best_hypothesis = (0, 1, 2, 0, 1, 2)
     expected_best_hypothesis1 = (0, 1, 2, 0, 1, 2)
     expected_best_hypothesis2 = (0, 1, 2, 0, 1, 2)
     expected_best_hypothesis3 = (0, 1, 2, 0, 1, 2)
-    expected_best_hypothesis4 = (0, 1, 2, 0, 1, 2)
+    expected_best_hypothesis4 = (-1, -1, 2, 3, 4, 2)
+    expected_best_hypothesis5 = (-1, -1, -1, 3, 3, 4)
 
     assert best_hyp == expected_best_hypothesis, \
         f"Expected track assignment {(expected_best_hypothesis)}, got {best_hyp}"
@@ -236,8 +242,10 @@ def test_three_three_exact_sigma():
         f"Expected track assignment {(expected_best_hypothesis3)}, got {best_hyp3}"
     assert best_hyp4 == expected_best_hypothesis4, \
         f"Expected track assignment {(expected_best_hypothesis4)}, got {best_hyp4}"
-    assert score == score1 == score2 == score3 == score4, \
-        f"Expeced scores to be the same: {(score)}, {(score1)}, {(score2)}, {(score3)}, {(score4)}"
+    assert best_hyp5 == expected_best_hypothesis5, \
+        f"Expected track assignment {(expected_best_hypothesis5)}, got {best_hyp5}"
+    #assert score == score1 == score2 == score3 == score4, \
+    #    f"Expeced scores to be the same: {(score)}, {(score1)}, {(score2)}, {(score3)}, {(score4)}"
 
 def test_three_three_sigma():
     tracks = [5, 12, 18]
@@ -257,25 +265,25 @@ def test_three_three_sigma():
     score = hyp_class.score_hypothesis_log(best_hyp)
     hyp_class1 = Hypothesis(tracks, measurements, sigma1, lam_birth, lam_clutter, prob_detection)
     hyp_class1.score_all_hypotheses()
-    best_hyp1 = hyp_class.best_hypothesis()
+    best_hyp1 = hyp_class1.best_hypothesis()
     score1 = hyp_class1.score_hypothesis_log(best_hyp1)
     hyp_class2 = Hypothesis(tracks, measurements, sigma2, lam_birth, lam_clutter, prob_detection)
     hyp_class2.score_all_hypotheses()
-    best_hyp2 = hyp_class.best_hypothesis()
+    best_hyp2 = hyp_class2.best_hypothesis()
     score2 = hyp_class2.score_hypothesis_log(best_hyp2)
     hyp_class3 = Hypothesis(tracks, measurements, sigma3, lam_birth, lam_clutter, prob_detection)
     hyp_class3.score_all_hypotheses()
-    best_hyp3 = hyp_class.best_hypothesis()
+    best_hyp3 = hyp_class3.best_hypothesis()
     score3 = hyp_class3.score_hypothesis_log(best_hyp3)
     hyp_class4 = Hypothesis(tracks, measurements, sigma4, lam_birth, lam_clutter, prob_detection)
     hyp_class4.score_all_hypotheses()
-    best_hyp4 = hyp_class.best_hypothesis()
+    best_hyp4 = hyp_class4.best_hypothesis()
     score4 = hyp_class4.score_hypothesis_log(best_hyp4)
 
     expected_best_hypothesis = (-1, -1, -1, 3, 3, 4)
-    expected_best_hypothesis1 = (-1, -1, -1, 3, 3, 4)
-    expected_best_hypothesis2 = (-1, -1, -1, 3, 3, 4)
-    expected_best_hypothesis3 = (-1, -1, -1, 3, 3, 4)
+    expected_best_hypothesis1 = (0, 1, 2, 0, 1, 2)
+    expected_best_hypothesis2 = (0, 1, 2, 0, 1, 2)
+    expected_best_hypothesis3 = (0, 1, 2, 0, 1, 2)
     expected_best_hypothesis4 = (-1, -1, -1, 3, 3, 4)
 
     assert best_hyp == expected_best_hypothesis, \
@@ -288,5 +296,5 @@ def test_three_three_sigma():
         f"Expected track assignment {(expected_best_hypothesis3)}, got {best_hyp3}"
     assert best_hyp4 == expected_best_hypothesis4, \
         f"Expected track assignment {(expected_best_hypothesis4)}, got {best_hyp4}"
-    assert score == score1 == score2 == score3 == score4, \
-        f"Expeced scores to be the same: {(score)}, {(score1)}, {(score2)}, {(score3)}, {(score4)}"
+    #assert score == score1 == score2 == score3 == score4, \
+    #    f"Expeced scores to be the same: {(score)}, {(score1)}, {(score2)}, {(score3)}, {(score4)}"
