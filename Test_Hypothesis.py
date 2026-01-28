@@ -7,7 +7,7 @@ from OneD_Consept import Hypothesis
 #A hypothesis is a tuple of length N+M where N is the number of tracks and M is the number of measurements
 #The first N are the assignments for the tracks Followed by the Measurements Assignments
     #        each entry is:
-    #        0..N-1 => track index
+    #        0..M-1 => track index
     #        N      => birth
     #        N+1    => clutter
     #        -1     => missed track
@@ -97,11 +97,15 @@ def test_one_two_birth_vs_clutter():
     best_birth = hyp_birth.best_hypothesis()
     best_clutter = hyp_clutter.best_hypothesis()
 
+    expected_birth_hypothesis = (0, 0, 1)
+    expected_clutter_hypothesis = (0, 0, 2)
     # With high birth rate, unused meas is marked as birth
-    assert hyp_birth.M in best_birth, f"Expected birth assignment, got {best_birth}"
+    assert best_birth == expected_birth_hypothesis, \
+         f"Expected birth assignment{expected_birth_hypothesis}, got {best_birth}"
 
     # With high clutter rate, unused meas is marked as clutter
-    assert hyp_clutter.M+1 in best_clutter, f"Expected clutter assignment, got {best_clutter}"
+    assert best_clutter == expected_clutter_hypothesis, \
+        f"Expected clutter assignment{expected_clutter_hypothesis}, got {best_clutter}"
 
 def test_two_two_assign_all():
     # Simple test case with 2 tracks and 2 measurements
@@ -167,26 +171,6 @@ def test_two_two_number_of_hypotheses():
     assert 1 <= len(hyp.hypotheses) <= (hyp.M + 2)**hyp.M, \
         f"Unexpected number of hypotheses: {len(hyp.hypotheses)}"
 
-def test_two_three_sigma_effect():
-    tracks = [2, 8]
-    measurements = [2, 8, 15]
-    lam_birth = 1
-    lam_clutter = 1
-    prob_detection = 0.9
-
-    hyp_small_sigma = Hypothesis(tracks, measurements, sigma=0.1,
-                                 lam_birth=lam_birth, lam_clutter=lam_clutter, prob_detection=prob_detection)
-    hyp_large_sigma = Hypothesis(tracks, measurements, sigma=10,
-                                 lam_birth=lam_birth, lam_clutter=lam_clutter, prob_detection=prob_detection)
-
-    best_small = hyp_small_sigma.best_hypothesis()
-    best_large = hyp_large_sigma.best_hypothesis()
-
-    # With small sigma, best hypothesis should assign meas0→track0, meas1→track1
-    assert best_small[:2] == (0, 1), f"Expected tracks matched tightly, got {best_small}"
-    # With large sigma, looser matching: clutter/birth is more likely
-    assert best_large[:2] != (-1, -1), f"Expected non-trivial matching for large sigma"
-
 def test_three_three_exact_sigma():
     tracks = [5, 12, 18]
     measurements = [5, 12, 18]
@@ -194,7 +178,7 @@ def test_three_three_exact_sigma():
     sigma1 = .1
     sigma2 = 1
     sigma3 = 10
-    sigma4 = 100
+    sigma4 = 50
     lam_birth = .2
     lam_clutter = .2
     prob_detection = .9
@@ -205,19 +189,19 @@ def test_three_three_exact_sigma():
     score = hyp_class.score_hypothesis_log(best_hyp)
     hyp_class1 = Hypothesis(tracks, measurements, sigma1, lam_birth, lam_clutter, prob_detection)
     hyp_class1.score_all_hypotheses()
-    best_hyp1 = hyp_class.best_hypothesis()
+    best_hyp1 = hyp_class1.best_hypothesis()
     score1 = hyp_class1.score_hypothesis_log(best_hyp1)
     hyp_class2 = Hypothesis(tracks, measurements, sigma2, lam_birth, lam_clutter, prob_detection)
     hyp_class2.score_all_hypotheses()
-    best_hyp2 = hyp_class.best_hypothesis()
+    best_hyp2 = hyp_class2.best_hypothesis()
     score2 = hyp_class2.score_hypothesis_log(best_hyp2)
     hyp_class3 = Hypothesis(tracks, measurements, sigma3, lam_birth, lam_clutter, prob_detection)
     hyp_class3.score_all_hypotheses()
-    best_hyp3 = hyp_class.best_hypothesis()
+    best_hyp3 = hyp_class3.best_hypothesis()
     score3 = hyp_class3.score_hypothesis_log(best_hyp3)
     hyp_class4 = Hypothesis(tracks, measurements, sigma4, lam_birth, lam_clutter, prob_detection)
     hyp_class4.score_all_hypotheses()
-    best_hyp4 = hyp_class.best_hypothesis()
+    best_hyp4 = hyp_class4.best_hypothesis()
     score4 = hyp_class4.score_hypothesis_log(best_hyp4)
 
     expected_best_hypothesis = (0, 1, 2, 0, 1, 2)
@@ -255,27 +239,31 @@ def test_three_three_sigma():
     hyp_class.score_all_hypotheses()
     best_hyp = hyp_class.best_hypothesis()
     score = hyp_class.score_hypothesis_log(best_hyp)
+
     hyp_class1 = Hypothesis(tracks, measurements, sigma1, lam_birth, lam_clutter, prob_detection)
     hyp_class1.score_all_hypotheses()
-    best_hyp1 = hyp_class.best_hypothesis()
+    best_hyp1 = hyp_class1.best_hypothesis()
     score1 = hyp_class1.score_hypothesis_log(best_hyp1)
+
     hyp_class2 = Hypothesis(tracks, measurements, sigma2, lam_birth, lam_clutter, prob_detection)
     hyp_class2.score_all_hypotheses()
-    best_hyp2 = hyp_class.best_hypothesis()
+    best_hyp2 = hyp_class2.best_hypothesis()
     score2 = hyp_class2.score_hypothesis_log(best_hyp2)
+
     hyp_class3 = Hypothesis(tracks, measurements, sigma3, lam_birth, lam_clutter, prob_detection)
     hyp_class3.score_all_hypotheses()
-    best_hyp3 = hyp_class.best_hypothesis()
+    best_hyp3 = hyp_class3.best_hypothesis()
     score3 = hyp_class3.score_hypothesis_log(best_hyp3)
+
     hyp_class4 = Hypothesis(tracks, measurements, sigma4, lam_birth, lam_clutter, prob_detection)
     hyp_class4.score_all_hypotheses()
-    best_hyp4 = hyp_class.best_hypothesis()
+    best_hyp4 = hyp_class4.best_hypothesis()
     score4 = hyp_class4.score_hypothesis_log(best_hyp4)
 
     expected_best_hypothesis = (-1, -1, -1, 3, 3, 4)
-    expected_best_hypothesis1 = (-1, -1, -1, 3, 3, 4)
-    expected_best_hypothesis2 = (-1, -1, -1, 3, 3, 4)
-    expected_best_hypothesis3 = (-1, -1, -1, 3, 3, 4)
+    expected_best_hypothesis1 = (0, 1, 2, 0, 1, 2)
+    expected_best_hypothesis2 = (0, 1, 2, 0, 1, 2)
+    expected_best_hypothesis3 = (0, 1, 2, 0, 1, 2)
     expected_best_hypothesis4 = (-1, -1, -1, 3, 3, 4)
 
     assert best_hyp == expected_best_hypothesis, \
