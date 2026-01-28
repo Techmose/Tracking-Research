@@ -1,6 +1,9 @@
 import itertools
 import math
 import numpy as np
+import heapq
+import copy
+from scipy.optimize import linear_sum_assignment
 
 class Hypothesis:
     def __init__(self, tracks, measurements, sigma, lam_birth, lam_clutter, prob_detection):
@@ -18,6 +21,7 @@ class Hypothesis:
 
         # Store hypotheses as list of tuples
         self.hypotheses = self.generate_hypotheses()
+        self.cost_matrix = self.generate_cost_matrix()
 
     def create_likelihood_matrix(self):
         tracks = self.tracks.reshape(-1, 1)
@@ -64,6 +68,86 @@ class Hypothesis:
 
         return results
     
+    def generate_cost_matrix(self):
+        N, M = self.N, self.M
+        P_D = self.prob_detection
+        L = self.L
+
+        lambda_birth = self.lam_birth
+        lambda_clutter = self.lam_clutter
+
+        INF = float("inf")
+
+        # rows: N tracks + 1 birth row + M measurement-stars
+        # cols: M measurements + N track-stars
+        rows = N + M
+        cols = M + N
+
+        C = np.full((rows, cols), INF)
+
+        # ---- Track rows (a, b, c) ----
+        for i in range(N):
+            # measurement association
+            for j in range(M):
+                if L[i, j] > 0:
+                    C[i, j] = -math.log(P_D * L[i, j])
+
+            # missed detection (a*, b*, c*)
+            C[i, M + i] = -math.log(1 - P_D)
+
+        # ---- Measurement-star rows (1*, 2*, 3*) ----
+        for j in range(M):
+            row = N + j
+
+            # false positive
+            C[row, j] = -math.log(lambda_clutter)
+
+            # padding
+            for i in range(N):
+                C[row, M + i] = 0
+
+        return C
+
+
+    def print_labeled_cost_matrix(self):
+        N, M = self.N, self.M
+
+        # ---- Column labels ----
+        col_labels = []
+        for j in range(M):
+            col_labels.append(str(j + 1))          # measurements
+        for i in range(N):
+            col_labels.append(f"{chr(ord('a') + i)}*")  # a*, b*, c*
+
+        # ---- Row labels ----
+        row_labels = []
+        for i in range(N):
+            row_labels.append(chr(ord('a') + i))   # a, b, c
+
+        for j in range(M):
+            row_labels.append(f"{j + 1}*")         # 1*, 2*, 3*
+
+        # ---- Formatting ----
+        col_width = 10
+
+        # Header
+        header = " " * col_width
+        for label in col_labels:
+            header += f"{label:>{col_width}}"
+        print(header)
+
+        # Rows
+        for r, row_label in enumerate(row_labels):
+            line = f"{row_label:>{col_width}}"
+            for c in range(self.cost_matrix.shape[1]):
+                val = self.cost_matrix[r, c]
+                if math.isinf(val):
+                    cell = "inf"
+                else:
+                    cell = f"{val:.3f}"
+                line += f"{cell:>{col_width}}"
+            print(line)
+
     def hypothesis_to_matrix(self, hypothesis):
         """
         Convert a single hypothesis tuple into a binary assignment matrix with
@@ -188,18 +272,92 @@ class Hypothesis:
 
         for hypotheis in top_k:
             self.print_hypothesis_matrix(hypotheis)
-        
 
-tracks = [3]
-measurements = [3]
+    def murty(self, K):
+        C0 = np.array(self.cost_matrix, copy=True)
+
+        # Solve initial (best) assignment
+        assignment0, cost0 = self.hungarian(C0)
+
+        solutions = []
+        heap = []
+
+        # Heap entries: (cost, id, assignment, cost_matrix)
+        uid = 0
+        heapq.heappush(heap, (cost0, uid, assignment0, C0))
+        uid += 1
+
+        while heap and len(solutions) < K:
+            cost, _, assignment, C = heapq.heappop(heap)
+            solutions.append((assignment, cost))
+
+            # Generate subproblems
+            for split_idx in range(len(assignment)):
+                Ci = copy.deepcopy(C)
+
+                # Fix earlier assignments
+                for r, c in assignment[:split_idx]:
+                    Ci[r, :] = math.inf
+                    Ci[:, c] = math.inf
+                    Ci[r, c] = C[r,c]
+
+                # Forbid this assignment at split
+                r_forbid, c_forbid = assignment[split_idx]
+                Ci[r_forbid, c_forbid] = math.inf
+
+                try:
+                    new_assignment, new_cost = self.hungarian(Ci)
+                    heapq.heappush(
+                        heap,
+                        (new_cost, uid, new_assignment, Ci)
+                    )
+                    uid += 1
+                except ValueError:
+                    # No feasible assignment
+                    continue
+
+        return solutions
+
+    def hungarian(self, C):
+        """
+        Solve a linear assignment problem.
+        Returns (assignment, total_cost).
+        """
+
+        # Hungarian cannot handle inf directly
+        row_ind, col_ind = linear_sum_assignment(C)
+        assignment = list(zip(row_ind.tolist(), col_ind.tolist()))
+
+        N = self.N
+        num_rows, num_cols = C.shape
+        dummy_rows = range(N, num_rows)
+        dummy_cols = range(N, num_cols)
+
+        # Remap dummy rows to deterministic dummy columns
+        for i, r in enumerate(dummy_rows):
+            # Only change if it matched a dummy column
+            if assignment[r][1] >= N:
+                assignment[r] = (r, dummy_cols[i])
+
+        # Recompute cost after adjustment
+        cost = sum(C[r, c] for r, c in assignment)
+
+        return assignment, cost
+
+
+tracks = [3, 7, 20]
+measurements = [2.5, 7.5, 10]
 sigma = 1
 lam_birth = 0.1
 lam_clutter = 0.1
 prob_detection = 0.9093095 #.9093 is a birth
 
-#hyp_class = Hypothesis(tracks, measurements, sigma, lam_birth, lam_clutter, prob_detection)
+hyp_class = Hypothesis(tracks, measurements, sigma, lam_birth, lam_clutter, prob_detection)
 #print(hyp_class.hypotheses)
 #hyp_class.print_hypothesis_matrix((0,0))
 #hyp_class.print_hypothesis_matrix((-1,1))
 #hyp_class.print_hypothesis_matrix((-1,2))
 #hyp_class.print_top_k_prob(3)
+hyp_class.print_labeled_cost_matrix()
+solutions = hyp_class.murty(10)
+print(solutions)
