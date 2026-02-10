@@ -329,15 +329,15 @@ class Hypothesis:
         assignment = list(zip(row_ind.tolist(), col_ind.tolist()))
 
         N = self.N
-        num_rows, num_cols = C.shape
-        dummy_rows = range(N, num_rows)
-        dummy_cols = range(N, num_cols)
 
+        for i, (row, col) in enumerate(assignment):
+          if row <N and col <N:
+                assignment[col+N] = (col+N, row + N)
         # Remap dummy rows to deterministic dummy columns
-        for i, r in enumerate(dummy_rows):
-            # Only change if it matched a dummy column
-            if assignment[r][1] >= N:
-                assignment[r] = (r, dummy_cols[i])
+        #for i, r in enumerate(dummy_rows):
+        # Only change if it matched a dummy column
+        #    if assignment[r][1] >= N:
+        #        assignment[r] = (r, dummy_cols[i])
 
         # Recompute cost after adjustment
         cost = sum(C[r, c] for r, c in assignment)
