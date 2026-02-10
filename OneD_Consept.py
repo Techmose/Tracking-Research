@@ -329,10 +329,11 @@ class Hypothesis:
         assignment = list(zip(row_ind.tolist(), col_ind.tolist()))
 
         N = self.N
+        M = self.M
 
         for i, (row, col) in enumerate(assignment):
-          if row <N and col <N:
-                assignment[col+N] = (col+N, row + N)
+          if row <N and col <M:
+                assignment[col+N] = (col+N, row + M)
         # Remap dummy rows to deterministic dummy columns
         #for i, r in enumerate(dummy_rows):
         # Only change if it matched a dummy column
@@ -359,5 +360,5 @@ hyp_class = Hypothesis(tracks, measurements, sigma, lam_birth, lam_clutter, prob
 #hyp_class.print_hypothesis_matrix((-1,2))
 #hyp_class.print_top_k_prob(3)
 hyp_class.print_labeled_cost_matrix()
-solutions = hyp_class.murty(10)
+solutions = hyp_class.murty(20)
 print(solutions)
