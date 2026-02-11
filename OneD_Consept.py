@@ -292,7 +292,7 @@ class Hypothesis:
             solutions.append((assignment, cost))
 
             # Generate subproblems
-            for split_idx in range(len(assignment)):
+            for split_idx in range(len(assignment)): # AC: update to self.N
                 Ci = copy.deepcopy(C)
 
                 # Fix earlier assignments
@@ -304,6 +304,9 @@ class Hypothesis:
                 # Forbid this assignment at split
                 r_forbid, c_forbid = assignment[split_idx]
                 Ci[r_forbid, c_forbid] = math.inf
+
+                if r_forbid >= self.N and c_forbid >= self.M:
+                    continue
 
                 try:
                     new_assignment, new_cost = self.hungarian(Ci)
@@ -328,11 +331,13 @@ class Hypothesis:
         row_ind, col_ind = linear_sum_assignment(C)
         assignment = list(zip(row_ind.tolist(), col_ind.tolist()))
 
+        #cost = sum(C[r, c] for r, c in assignment)
+
         N = self.N
         M = self.M
 
-        for i, (row, col) in enumerate(assignment):
-          if row <N and col <M:
+        for (row, col) in assignment:
+            if row <N and col <M:
                 assignment[col+N] = (col+N, row + M)
         # Remap dummy rows to deterministic dummy columns
         #for i, r in enumerate(dummy_rows):
@@ -360,5 +365,7 @@ hyp_class = Hypothesis(tracks, measurements, sigma, lam_birth, lam_clutter, prob
 #hyp_class.print_hypothesis_matrix((-1,2))
 #hyp_class.print_top_k_prob(3)
 hyp_class.print_labeled_cost_matrix()
-solutions = hyp_class.murty(20)
-print(solutions)
+solutions = hyp_class.murty(100)
+#print(solutions)
+for line in solutions: print(line)
+print("%d solutions" % len(solutions))
