@@ -76,7 +76,7 @@ class Hypothesis:
         lambda_birth = self.lam_birth
         lambda_clutter = self.lam_clutter
 
-        INF = float("inf")
+        INF = np.inf
 
         # rows: N tracks + 1 birth row + M measurement-stars
         # cols: M measurements + N track-stars
@@ -292,7 +292,7 @@ class Hypothesis:
             solutions.append((assignment, cost))
 
             # Generate subproblems
-            for split_idx in range(len(assignment)):
+            for split_idx in range(self.N):
                 Ci = copy.deepcopy(C)
 
                 # Fix earlier assignments
@@ -308,9 +308,9 @@ class Hypothesis:
                 try:
                     new_assignment, new_cost = self.hungarian(Ci)
                     heapq.heappush(
-                        heap,
-                        (new_cost, uid, new_assignment, Ci)
-                    )
+                            heap,
+                            (new_cost, uid, new_assignment, Ci)
+                        )
                     uid += 1
                 except ValueError:
                     # No feasible assignment
@@ -327,13 +327,13 @@ class Hypothesis:
         # Hungarian cannot handle inf directly
         row_ind, col_ind = linear_sum_assignment(C)
         assignment = list(zip(row_ind.tolist(), col_ind.tolist()))
-
+        
         N = self.N
         M = self.M
 
-        for i, (row, col) in enumerate(assignment):
-          if row <N and col <M:
-                assignment[col+N] = (col+N, row + M)
+        for (row, col) in assignment:
+          if row < N and col < M:
+                assignment[col + N] = (col + N, row + M)
         # Remap dummy rows to deterministic dummy columns
         #for i, r in enumerate(dummy_rows):
         # Only change if it matched a dummy column
@@ -360,5 +360,5 @@ hyp_class = Hypothesis(tracks, measurements, sigma, lam_birth, lam_clutter, prob
 #hyp_class.print_hypothesis_matrix((-1,2))
 #hyp_class.print_top_k_prob(3)
 hyp_class.print_labeled_cost_matrix()
-solutions = hyp_class.murty(20)
+solutions = hyp_class.murty(15)
 print(solutions)
