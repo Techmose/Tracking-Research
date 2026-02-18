@@ -305,6 +305,9 @@ class Hypothesis:
                 r_forbid, c_forbid = assignment[split_idx]
                 Ci[r_forbid, c_forbid] = math.inf
 
+                if r_forbid >= self.N and c_forbid >= self.M:
+                    continue
+
                 try:
                     new_assignment, new_cost = self.hungarian(Ci)
                     heapq.heappush(
